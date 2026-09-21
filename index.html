@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pecus — risco sanitário na origem</title>
+  <meta name="description"
+        content="Painel de consulta ao histórico sanitário do município de procedência do gado, com dados públicos do Serviço de Inspeção Federal e do IBGE.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#1F4F3A">
+
+  <link rel="icon" href="assets/marca/pecus-icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/marca/pecus-icon.svg">
+
+  <!-- tema aplicado antes da pintura, para não piscar -->
+  <script>
+    try {
+      var t = localStorage.getItem('sigsif-tema');
+      if (t) document.documentElement.dataset.tema = t;
+    } catch (e) { /* localStorage bloqueado: fica no tema do sistema */ }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bitter:wght@600;700&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+  <link href="css/estilo.css" rel="stylesheet">
+</head>
+<body data-estado="carregando">
+
+<!-- ====================== ÍCONES ====================== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <!-- cabeça do Pecus: sólida, herda a cor do contêiner (ver assets/marca/) -->
+    <g id="i-pecus" transform="translate(12,13.76) scale(0.16)">
+      <path d="M-30 -30 C -66 -50 -80 -22 -62 -8 C -66 -30 -48 -36 -28 -30 Z" fill="currentColor"/>
+      <path d="M30 -30 C 66 -50 80 -22 62 -8 C 66 -30 48 -36 28 -30 Z" fill="currentColor"/>
+      <ellipse cx="0" cy="4" rx="42" ry="46" fill="currentColor"/>
+      <circle cx="-17" cy="-4" r="6.5" fill="var(--marca-vazado, #2F7D5B)"/>
+      <circle cx="17" cy="-4" r="6.5" fill="var(--marca-ambar, #E8A13A)"/>
+      <ellipse cx="0" cy="26" rx="20" ry="15" fill="var(--marca-vazado, #2F7D5B)"/>
+      <circle cx="-8" cy="24" r="3" fill="currentColor"/>
+      <circle cx="8" cy="24" r="3" fill="currentColor"/>
+    </g>
+    <g id="i-gado" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 7c0-1.5.6-3 2-3.5C6.6 5 7.5 6 8.5 6.5M20 7c0-1.5-.6-3-2-3.5C17.4 5 16.5 6 15.5 6.5"/>
+      <path d="M8.5 6.5h7A3.5 3.5 0 0 1 19 10v3a7 7 0 0 1-14 0v-3a3.5 3.5 0 0 1 3.5-3.5Z"/>
+      <path d="M9.5 11h.01M14.5 11h.01"/><path d="M10 16h4"/>
+    </g>
+    <g id="i-filtro" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 5h18l-7 8v6l-4 2v-8L3 5Z"/>
+    </g>
+    <g id="i-sol" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="4"/>
+      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+    </g>
+    <g id="i-lua" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/>
+    </g>
+    <g id="i-x" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <path d="M6 6l12 12M18 6L6 18"/>
+    </g>
+    <g id="i-limpar" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/>
+    </g>
+    <g id="i-alerta" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/>
+      <path d="M12 9v4M12 17h.01"/>
+    </g>
+    <g id="i-local" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+    </g>
+    <g id="i-info" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/>
+    </g>
+    <g id="i-barras" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 21h18"/><path d="M6 21V9M12 21V4M18 21v-7"/>
+    </g>
+    <g id="i-linha" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 21V3M3 21h18"/><path d="m6 15 4-5 3.5 3L21 6"/>
+    </g>
+    <g id="i-calendario" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>
+    </g>
+    <g id="i-alvo" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4"/>
+    </g>
+    <g id="i-lista" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/>
+    </g>
+    <g id="i-baixar" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/>
+    </g>
+    <g id="i-link" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 13a5 5 0 0 0 7.5.5l3-3A5 5 0 0 0 13.5 3.5L11.7 5.3"/>
+      <path d="M14 11a5 5 0 0 0-7.5-.5l-3 3A5 5 0 0 0 10.5 20.5l1.8-1.8"/>
+    </g>
+    <g id="i-impressora" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/>
+      <rect x="6" y="14" width="12" height="7" rx="1"/>
+    </g>
+    <g id="i-balanca" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3v18M7 21h10M12 6l7 2M12 6 5 8"/>
+      <path d="M5 8 2 15a3 3 0 0 0 6 0L5 8ZM19 8l-3 7a3 3 0 0 0 6 0l-3-7Z"/>
+    </g>
+    <g id="i-mapa" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m9 4-6 2.5v13L9 17l6 3 6-2.5v-13L15 7 9 4Z"/><path d="M9 4v13M15 7v13"/>
+    </g>
+    <g id="i-voltar" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 12H5M11 18l-6-6 6-6"/>
+    </g>
+    <g id="i-olho" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>
+    </g>
+  </defs>
+</svg>
+
+<div class="carregando-barra" aria-hidden="true"></div>
+<a class="pular" href="#veredito">Pular para o resultado</a>
+
+<!-- ====================== BARRA ====================== -->
+<header class="barra">
+  <div class="barra__interno">
+    <span class="barra__logo" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-pecus"/></svg></span>
+
+    <div class="barra__texto">
+      <p class="barra__marca">Pecus <b>·</b> risco sanitário na origem</p>
+      <p class="barra__nota" id="rodape-fonte">Serviço de Inspeção Federal (MAPA) e Pesquisa Pecuária Municipal (IBGE)</p>
+    </div>
+
+    <div class="barra__acoes">
+      <button type="button" class="btn-icone abrir-filtros" id="abrir-filtros"
+              aria-expanded="false" aria-controls="filtros" data-ativos="0">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-filtro"/></svg>
+        <span class="btn-icone__rotulo">Filtros</span>
+        <span class="conta" id="conta-filtros">0</span>
+      </button>
+
+      <button type="button" class="btn-icone" id="btn-link" title="Copiar link com os filtros atuais">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-link"/></svg>
+        <span class="visually-hidden">Copiar o link desta consulta</span>
+      </button>
+
+      <button type="button" class="btn-icone" id="btn-imprimir" title="Imprimir ou salvar em PDF">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-impressora"/></svg>
+        <span class="visually-hidden">Imprimir o painel</span>
+      </button>
+
+      <button type="button" class="btn-icone" id="btn-tema" title="Alternar tema claro e escuro">
+        <svg class="tema-claro" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-lua"/></svg>
+        <svg class="tema-escuro" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-sol"/></svg>
+        <span class="visually-hidden">Alternar tema claro e escuro</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="veu" id="veu" data-aberto="nao"></div>
+
+<div class="partida" id="partida">
+  <div class="partida__caixa">
+    <span class="partida__logo" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-pecus"/></svg></span>
+    <p class="partida__titulo">Lendo a base do Serviço de Inspeção Federal</p>
+    <p class="partida__nota" id="partida-nota">Conectando…</p>
+    <div class="partida__trilho"><i id="partida-barra"></i></div>
+  </div>
+</div>
+
+<main class="folha">
+
+  <!-- ====================== FILTROS ====================== -->
+  <form class="ficha" id="filtros" aria-labelledby="ficha-titulo" data-aberta="nao">
+    <div class="ficha__cabecalho">
+      <span class="ficha__icone" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-local"/></svg></span>
+      <div>
+        <h2 class="ficha__titulo" id="ficha-titulo">Procedência do lote</h2>
+        <p class="ficha__ajuda">Informe de onde vem o gado que você está negociando.</p>
+      </div>
+      <button type="button" class="ficha__fechar" id="fechar-filtros">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-x"/></svg>
+        <span class="visually-hidden">Fechar os filtros</span>
+      </button>
+    </div>
+
+    <ul class="chips" id="chips" aria-label="Filtros ativos"></ul>
+
+    <label class="campo">
+      <span>Estado</span>
+      <span class="select-caixa"><select id="f-uf"><option value="todos">Todos os estados</option></select></span>
+    </label>
+
+    <label class="campo">
+      <span>Município</span>
+      <span class="select-caixa"><select id="f-municipio"><option value="todos">Todos os municípios</option></select></span>
+    </label>
+
+    <label class="campo">
+      <span>Diagnóstico</span>
+      <span class="select-caixa"><select id="f-diagnostico"><option value="todos">Todos os diagnósticos</option></select></span>
+    </label>
+
+    <label class="campo" id="campo-especie">
+      <span>Espécie</span>
+      <span class="select-caixa"><select id="f-especie"><option value="todos">Todas</option></select></span>
+      <small class="campo__nota" id="nota-especie" hidden>
+        O dado municipal do SIF não traz espécie: o filtro vale só para o nível estadual.
+      </small>
+    </label>
+
+    <fieldset class="campo campo--duplo">
+      <legend>Período</legend>
+      <div class="campo__periodo">
+        <span class="select-caixa"><select id="f-ano-ini" aria-label="Ano inicial"></select></span>
+        <span class="campo__ate">até</span>
+        <span class="select-caixa"><select id="f-ano-fim" aria-label="Ano final"></select></span>
+      </div>
+    </fieldset>
+
+    <button type="button" class="botao-limpar" id="f-limpar" disabled>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-limpar"/></svg>
+      Limpar a consulta
+    </button>
+
+    <p class="ficha__aviso">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-alerta"/></svg>
+      <span>O painel mede o que a inspeção federal registrou na origem dos animais, não a situação
+        do rebanho de um vendedor específico.</span>
+    </p>
+  </form>
+
+  <!-- ====================== RESULTADO ====================== -->
+  <div class="resultado">
+
+    <section class="veredito" id="veredito" data-faixa="tipico" aria-live="polite">
+      <div class="veredito__topo">
+        <p class="veredito__escopo" id="v-escopo">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-local"/></svg>
+          <span>Brasil</span>
+        </p>
+        <span class="selo" id="v-selo"><i class="selo__ponto" aria-hidden="true"></i><span id="v-selo-texto">Lendo os dados</span></span>
+      </div>
+
+      <p class="veredito__frase" id="v-frase">Carregando os dados do Serviço de Inspeção Federal…</p>
+
+      <div class="veredito__corpo">
+        <div class="veredito__numero">
+          <strong id="v-taxa">—</strong>
+          <span id="v-unidade">casos por 10 mil cabeças abatidas</span>
+        </div>
+
+        <div class="regua" id="v-regua" role="img"
+             aria-label="Posição desta procedência na distribuição nacional">
+          <div class="regua__trilho">
+            <div class="regua__faixa" id="v-faixa" title="Metade central das procedências comparáveis"></div>
+            <div class="regua__mediana" id="v-mediana"><span>mediana nacional</span></div>
+            <div class="regua__marca" id="v-marca" data-pos="meio"><span id="v-marca-rotulo"></span></div>
+            <p class="regua__extremos"><span>mais limpo</span><span>mais registro</span></p>
+          </div>
+          <p class="regua__legenda" id="v-legenda">—</p>
+        </div>
+      </div>
+
+      <ul class="indicadores">
+        <li class="indicador">
+          <span class="indicador__icone" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-alerta"/></svg></span>
+          <span><strong class="indicador__valor" id="i-casos">—</strong>
+                <span class="indicador__rotulo">casos registrados</span></span>
+        </li>
+        <li class="indicador">
+          <span class="indicador__icone" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-gado"/></svg></span>
+          <span><strong class="indicador__valor" id="i-denominador">—</strong>
+                <span class="indicador__rotulo" id="i-denominador-rotulo">cabeças abatidas</span></span>
+        </li>
+        <li class="indicador">
+          <span class="indicador__icone" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-local"/></svg></span>
+          <span><strong class="indicador__valor" id="i-municipios">—</strong>
+                <span class="indicador__rotulo">municípios de origem</span></span>
+        </li>
+        <li class="indicador indicador--alerta">
+          <span class="indicador__icone" aria-hidden="true"><svg viewBox="0 0 24 24"><use href="#i-alvo"/></svg></span>
+          <span><strong class="indicador__valor" id="i-alertas">—</strong>
+                <span class="indicador__rotulo">procedências em alerta</span></span>
+        </li>
+      </ul>
+    </section>
+
+    <section class="bloco" aria-labelledby="t-puxa">
+      <div class="bloco__cabecalho">
+        <div>
+          <h2 id="t-puxa"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-lista"/></svg> O que puxa a taxa</h2>
+          <p class="bloco__nota">Diagnósticos ordenados pelo número de casos no recorte escolhido.</p>
+        </div>
+      </div>
+      <ol class="puxa" id="lista-diagnosticos"></ol>
+    </section>
+
+    <div class="painel-mapa">
+      <section class="bloco bloco--mapa" aria-labelledby="t-mapa">
+        <div class="bloco__cabecalho">
+          <div>
+            <h2 id="t-mapa"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-mapa"/></svg>
+              <span id="mapa-titulo">Mapa da procedência</span></h2>
+            <p class="bloco__nota" id="mapa-nota">Clique num estado para entrar nos municípios.</p>
+          </div>
+          <div class="acoes">
+            <button type="button" class="botao" id="mapa-voltar" hidden>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-voltar"/></svg> Brasil
+            </button>
+          </div>
+        </div>
+        <div class="mapa" id="mapa"></div>
+      </section>
+
+      <section class="bloco" aria-labelledby="t-ranking">
+        <div class="bloco__cabecalho">
+          <div>
+            <h2 id="t-ranking"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-barras"/></svg>
+              <span id="ranking-titulo">Estados de procedência</span></h2>
+            <p class="bloco__nota" id="ranking-nota">Ordenado pela taxa. Clique para filtrar.</p>
+          </div>
+        </div>
+        <ol class="ranking" id="ranking"></ol>
+      </section>
+    </div>
+
+    <div class="dupla">
+      <section class="bloco" aria-labelledby="t-serie">
+        <div class="bloco__cabecalho">
+          <div>
+            <h2 id="t-serie"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-linha"/></svg> Evolução mês a mês</h2>
+            <p class="bloco__nota" id="serie-nota">Taxa mensal no recorte escolhido.</p>
+          </div>
+        </div>
+        <div class="tela tela--baixa"><canvas id="grafico-serie" role="img"
+          aria-label="Linha com a taxa mensal de casos por 10 mil cabeças"></canvas></div>
+      </section>
+
+      <section class="bloco" aria-labelledby="t-sazonal">
+        <div class="bloco__cabecalho">
+          <div>
+            <h2 id="t-sazonal"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-calendario"/></svg> Mês do ano</h2>
+            <p class="bloco__nota">Taxa média de cada mês do calendário no período escolhido —
+              revela sazonalidade que a série cronológica dilui.</p>
+          </div>
+        </div>
+        <div class="tela tela--baixa"><canvas id="grafico-sazonal" role="img"
+          aria-label="Barras com a taxa média por mês do calendário"></canvas></div>
+      </section>
+    </div>
+
+    <section class="bloco" aria-labelledby="t-modelo">
+      <div class="bloco__cabecalho">
+        <div>
+          <h2 id="t-modelo"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-alvo"/></svg> Procedências fora do padrão</h2>
+          <p class="bloco__nota" id="modelo-nota">—</p>
+        </div>
+        <div class="acoes">
+          <button type="button" class="botao" id="btn-csv" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-baixar"/></svg> CSV
+          </button>
+        </div>
+      </div>
+
+      <div class="tela"><canvas id="grafico-dispersao" role="img"
+        aria-label="Dispersão do rebanho contra a taxa de casos, com as procedências atípicas destacadas"></canvas></div>
+
+      <div class="tabela-rolagem">
+        <table class="tabela" id="tabela-alertas">
+          <caption class="visually-hidden">Municípios de procedência marcados como atípicos pelo modelo</caption>
+          <thead>
+            <tr>
+              <th scope="col" data-col="local"><button type="button" class="ord">Procedência</button></th>
+              <th scope="col" data-col="ano"><button type="button" class="ord">Safra</button></th>
+              <th scope="col" class="num" data-col="taxa" aria-sort="descending"><button type="button" class="ord">Taxa</button></th>
+              <th scope="col" class="num" data-col="razao"><button type="button" class="ord">× mediana</button></th>
+              <th scope="col" class="num" data-col="rebanho"><button type="button" class="ord">Rebanho</button></th>
+              <th scope="col" data-col="diag"><button type="button" class="ord">Principal diagnóstico</button></th>
+              <th scope="col" class="num" data-col="grau"><button type="button" class="ord">Grau</button></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="bloco bloco--leitura" aria-labelledby="t-ler">
+      <div class="bloco__cabecalho">
+        <div>
+          <h2 id="t-ler"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-info"/></svg> Como ler este painel</h2>
+        </div>
+      </div>
+      <div class="leitura">
+        <div class="leitura__item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-balanca"/></svg>
+          <p><strong>Dois denominadores, duas perguntas.</strong>
+            No estado a taxa é por <em>cabeça abatida</em> sob inspeção federal. No município é por
+            <em>cabeça de rebanho</em> (IBGE), porque o SIF não publica abate por município.
+            Os dois números não se comparam entre si, só dentro do mesmo n&iacute;vel.</p>
+        </div>
+        <div class="leitura__item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-olho"/></svg>
+          <p><strong>Detecção não é prevalência.</strong>
+            A taxa mede o que a inspeção federal <em>detectou</em>, não a doença que existe no rebanho.
+            Estado com fiscalização mais rigorosa ou com frigorífico exportador tende a registrar mais.
+            Taxa baixa pode ser rebanho sadio ou inspeção menos intensa.</p>
+        </div>
+        <div class="leitura__item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-local"/></svg>
+          <p><strong>Procedência não é frigorífico.</strong>
+            Procedência é o município de origem do animal, que não é o município onde ele foi abatido.
+            Um lote abatido em Barretos pode ter vindo de Vila Rica.</p>
+        </div>
+        <div class="leitura__item">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-balanca"/></svg>
+          <p><strong>Alerta é pergunta, não veto.</strong>
+            Uma procedência marcada como fora do padrão é um ponto para levantar com o vendedor
+            e com o veterinário, não um motivo automático para recusar a compra.</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="rodape">
+  <div class="rodape__interno">
+    <img class="rodape__marca rodape__marca--claro" src="assets/marca/pecus-logo.svg"
+         alt="Pecus — risco sanitário na origem" width="620" height="180">
+    <img class="rodape__marca rodape__marca--escuro" src="assets/marca/pecus-logo-mono.svg"
+         alt="" aria-hidden="true" width="620" height="180">
+    <p>Projeto Integrador em Computação IV — <strong>Univesp</strong>.<br>
+       Protótipo alimentado por dados abertos do Serviço de Inspeção Federal (MAPA).</p>
+    <p class="rodape__tecnico" id="rodape-tecnico">—</p>
+  </div>
+</footer>
+
+<div class="erro" id="erro" role="alert" hidden>
+  <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-alerta"/></svg>
+  <span class="erro__texto" id="erro-texto"></span>
+  <button type="button" class="erro__fechar" id="erro-fechar" aria-label="Fechar o aviso">&times;</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
